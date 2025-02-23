@@ -11,9 +11,9 @@
 
 
 
-<title>Portfolio 1</title>
+<title>Portfolio 1- Tidy Tuesday Project</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -141,11 +141,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -174,8 +178,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -183,16 +187,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -293,20 +290,74 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Portfolio 1</h1>
+<h1 class="title toc-ignore">Portfolio 1- Tidy Tuesday Project</h1>
 
 </div>
 
 
 <blockquote>
-<p>The projects should be numbered consecutively (i.e., in the order in
-which you began them), and should include for each project a description
-of the goal, the product (computer program, hand graph, computer graph,
-etc.), the data, and some interpretation. Reports must be reproducible
-and of high quality in terms of writing, grammar, presentation, etc.</p>
+<p>description of the goal: The main goal of this Tidy Tuesday project
+is to explore and analyze automotive fuel efficiency using the “mpg”
+dataset. Through various data transformations, visualizations, and
+summaries, the project aims to:</p>
 </blockquote>
+<ul>
+<li><p>Understand the relationship between engine displacement and
+average fuel efficiency in different classes of vehicles.</p></li>
+<li><p>Investigate patterns in the distribution of fuel efficiency
+across different classes of vehicles.</p></li>
+<li><p>Evaluate manufacturer-specific fuel efficiency trends and
+categorize vehicles into high and low efficiency categories based on
+average mileage.</p></li>
+</ul>
 <pre class="r"><code>library(tidyverse) 
-library(datasauRus)</code></pre>
+library(tidyr)
+glimpse(mpg)</code></pre>
+<pre><code>## Rows: 234
+## Columns: 11
+## $ manufacturer &lt;chr&gt; &quot;audi&quot;, &quot;audi&quot;, &quot;audi&quot;, &quot;audi&quot;, &quot;audi&quot;, &quot;audi&quot;, &quot;audi&quot;, &quot;…
+## $ model        &lt;chr&gt; &quot;a4&quot;, &quot;a4&quot;, &quot;a4&quot;, &quot;a4&quot;, &quot;a4&quot;, &quot;a4&quot;, &quot;a4&quot;, &quot;a4 quattro&quot;, &quot;…
+## $ displ        &lt;dbl&gt; 1.8, 1.8, 2.0, 2.0, 2.8, 2.8, 3.1, 1.8, 1.8, 2.0, 2.0, 2.…
+## $ year         &lt;int&gt; 1999, 1999, 2008, 2008, 1999, 1999, 2008, 1999, 1999, 200…
+## $ cyl          &lt;int&gt; 4, 4, 4, 4, 6, 6, 6, 4, 4, 4, 4, 6, 6, 6, 6, 6, 6, 8, 8, …
+## $ trans        &lt;chr&gt; &quot;auto(l5)&quot;, &quot;manual(m5)&quot;, &quot;manual(m6)&quot;, &quot;auto(av)&quot;, &quot;auto…
+## $ drv          &lt;chr&gt; &quot;f&quot;, &quot;f&quot;, &quot;f&quot;, &quot;f&quot;, &quot;f&quot;, &quot;f&quot;, &quot;f&quot;, &quot;4&quot;, &quot;4&quot;, &quot;4&quot;, &quot;4&quot;, &quot;4…
+## $ cty          &lt;int&gt; 18, 21, 20, 21, 16, 18, 18, 18, 16, 20, 19, 15, 17, 17, 1…
+## $ hwy          &lt;int&gt; 29, 29, 31, 30, 26, 26, 27, 26, 25, 28, 27, 25, 25, 25, 2…
+## $ fl           &lt;chr&gt; &quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p…
+## $ class        &lt;chr&gt; &quot;compact&quot;, &quot;compact&quot;, &quot;compact&quot;, &quot;compact&quot;, &quot;compact&quot;, &quot;c…</code></pre>
+<pre class="r"><code># Data cleaning and preparation
+mpg_clean &lt;- mpg %&gt;%
+  filter(!is.na(hwy), !is.na(cty)) %&gt;% # Remove potential missing values
+  mutate(avg_mpg = (hwy + cty)/2)      # Create a new column for average mileage</code></pre>
+<pre class="r"><code># Explore relationships: Does engine displacement (displ) affect mileage?
+mpg_summary &lt;- mpg_clean %&gt;%
+  group_by(class, manufacturer) %&gt;%
+  summarize(mean_mpg = mean(avg_mpg),
+            mean_displ = mean(displ),
+            .groups = &quot;drop&quot;) %&gt;%
+  arrange(desc(mean_mpg))</code></pre>
+<pre class="r"><code># Data visualization: Mileage vs Engine displacement, by Vehicle Class
+ggplot(mpg_clean, aes(x = displ, y = avg_mpg, color = class)) +
+  geom_point(alpha = 0.7, size = 3) +
+  geom_smooth(method = &quot;lm&quot;, se = FALSE, color = &quot;black&quot;, linewidth = 0.8) +
+  facet_wrap(~class, scales = &quot;free&quot;) +
+  labs(
+    title = &quot;Relationship between Engine Displacement and Mileage by Vehicle Class&quot;,
+    x = &quot;Engine Displacement (L)&quot;,
+    y = &quot;Average Mileage (mpg)&quot;,
+    color = &quot;Vehicle Class&quot;,
+    caption = &quot;Data Source: ggplot2 mpg dataset&quot;
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = &quot;bottom&quot;,
+    strip.text = element_text(size = 10, face = &quot;bold&quot;),
+    plot.title = element_text(size = 16, face = &quot;bold&quot;, hjust = 0.5),
+    plot.caption = element_text(size = 8, color = &quot;gray40&quot;)
+  )</code></pre>
+<pre><code>## `geom_smooth()` using formula = &#39;y ~ x&#39;</code></pre>
+<p><img src="p01_files/figure-html/data%20visualization-1.png" width="672" /></p>
 
 
 
