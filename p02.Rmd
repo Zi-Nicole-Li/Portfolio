@@ -74,5 +74,8 @@ print(forecasted_prices)
 
 # In an oversimplified way, I predicted the next 60 days of Apple stock... Whoever follows this procedure for stocks should be prepared to accept the fate of bankruptcy.
 
+# reference: https://stat-wizards.github.io/Forcasting-A-Time-Series-Stock-Market-Data/
+
+
 ```
 
