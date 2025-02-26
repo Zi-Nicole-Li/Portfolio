@@ -2,9 +2,9 @@
 title: "Portfolio 1- Tidy Tuesday Project"
 ---
 
-> description of the goal: The main goal of this Tidy Tuesday project is to explore and analyze automotive fuel efficiency using the “mpg” dataset. Through various data transformations, visualizations, and summaries, the project aims to:
+> description of the goal: The main goal of this Tidy Tuesday project is to explore and analyze automotive fuel efficiency using the “mpg” dataset. The project aims to:
 
-- Understand the relationship between engine displacement and average fuel efficiency in different classes of vehicles.
+- Understand the relationship between engine displacement and average fuel efficiency.
 
 - Investigate patterns in the distribution of fuel efficiency across different classes of vehicles.
 
@@ -23,28 +23,30 @@ glimpse(mpg)
 ```{r data cleaning}
 # Data cleaning and preparation
 mpg_clean <- mpg %>%
-  filter(!is.na(hwy), !is.na(cty)) %>% # Remove potential missing values
+  filter(!is.na(hwy), !is.na(cty)) %>% # Remove missing values
   mutate(avg_mpg = (hwy + cty)/2)      # Create a new column for average mileage
-
 
 ```
 
 
 ```{r explore relationships}
-# Explore relationships: Does engine displacement (displ) affect mileage?
+# Explore relationships: Does engine displacement affect mileage?
 mpg_summary <- mpg_clean %>%
   group_by(class, manufacturer) %>%
   summarize(mean_mpg = mean(avg_mpg),
             mean_displ = mean(displ),
             .groups = "drop") %>%
   arrange(desc(mean_mpg))
+
+# based on the mpg_summary, the data is sorted by descending average mileage (mean_mpg), reveals lower average engine displacement (mean_displ) among vehicles with higher mileage.
+
 ```
 
 
 ```{r data visualization}
 # Data visualization: Mileage vs Engine displacement, by Vehicle Class
 ggplot(mpg_clean, aes(x = displ, y = avg_mpg, color = class)) +
-  geom_point(alpha = 0.7, size = 3) +
+  geom_point(alpha = 0.5, size = 3) +
   geom_smooth(method = "lm", se = FALSE, color = "black", linewidth = 0.8) +
   facet_wrap(~class, scales = "free") +
   labs(
@@ -59,9 +61,8 @@ ggplot(mpg_clean, aes(x = displ, y = avg_mpg, color = class)) +
     legend.position = "bottom",
     strip.text = element_text(size = 10, face = "bold"),
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    plot.caption = element_text(size = 8, color = "gray40")
+    plot.caption = element_text(size = 8, color = "gray")
   )
-
   
 ```
 

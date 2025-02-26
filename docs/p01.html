@@ -298,12 +298,11 @@ $(document).ready(function () {
 <blockquote>
 <p>description of the goal: The main goal of this Tidy Tuesday project
 is to explore and analyze automotive fuel efficiency using the “mpg”
-dataset. Through various data transformations, visualizations, and
-summaries, the project aims to:</p>
+dataset. The project aims to:</p>
 </blockquote>
 <ul>
 <li><p>Understand the relationship between engine displacement and
-average fuel efficiency in different classes of vehicles.</p></li>
+average fuel efficiency.</p></li>
 <li><p>Investigate patterns in the distribution of fuel efficiency
 across different classes of vehicles.</p></li>
 <li><p>Evaluate manufacturer-specific fuel efficiency trends and
@@ -328,18 +327,20 @@ glimpse(mpg)</code></pre>
 ## $ class        &lt;chr&gt; &quot;compact&quot;, &quot;compact&quot;, &quot;compact&quot;, &quot;compact&quot;, &quot;compact&quot;, &quot;c…</code></pre>
 <pre class="r"><code># Data cleaning and preparation
 mpg_clean &lt;- mpg %&gt;%
-  filter(!is.na(hwy), !is.na(cty)) %&gt;% # Remove potential missing values
+  filter(!is.na(hwy), !is.na(cty)) %&gt;% # Remove missing values
   mutate(avg_mpg = (hwy + cty)/2)      # Create a new column for average mileage</code></pre>
-<pre class="r"><code># Explore relationships: Does engine displacement (displ) affect mileage?
+<pre class="r"><code># Explore relationships: Does engine displacement affect mileage?
 mpg_summary &lt;- mpg_clean %&gt;%
   group_by(class, manufacturer) %&gt;%
   summarize(mean_mpg = mean(avg_mpg),
             mean_displ = mean(displ),
             .groups = &quot;drop&quot;) %&gt;%
-  arrange(desc(mean_mpg))</code></pre>
+  arrange(desc(mean_mpg))
+
+# based on the mpg_summary, the data is sorted by descending average mileage (mean_mpg), reveals lower average engine displacement (mean_displ) among vehicles with higher mileage.</code></pre>
 <pre class="r"><code># Data visualization: Mileage vs Engine displacement, by Vehicle Class
 ggplot(mpg_clean, aes(x = displ, y = avg_mpg, color = class)) +
-  geom_point(alpha = 0.7, size = 3) +
+  geom_point(alpha = 0.5, size = 3) +
   geom_smooth(method = &quot;lm&quot;, se = FALSE, color = &quot;black&quot;, linewidth = 0.8) +
   facet_wrap(~class, scales = &quot;free&quot;) +
   labs(
@@ -354,7 +355,7 @@ ggplot(mpg_clean, aes(x = displ, y = avg_mpg, color = class)) +
     legend.position = &quot;bottom&quot;,
     strip.text = element_text(size = 10, face = &quot;bold&quot;),
     plot.title = element_text(size = 16, face = &quot;bold&quot;, hjust = 0.5),
-    plot.caption = element_text(size = 8, color = &quot;gray40&quot;)
+    plot.caption = element_text(size = 8, color = &quot;gray&quot;)
   )</code></pre>
 <pre><code>## `geom_smooth()` using formula = &#39;y ~ x&#39;</code></pre>
 <p><img src="p01_files/figure-html/data%20visualization-1.png" width="672" /></p>

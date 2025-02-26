@@ -1,5 +1,78 @@
 ---
-title: "Portfolio 2"
+title: "Portfolio 2-Time Series Analysis Project on Stock Market forecasting"
 ---
 
-> The projects should be numbered consecutively (i.e., in the order in which you began them), and should include for each project a description of the goal, the product (computer program, hand graph, computer graph, etc.), the data, and some interpretation. Reports must be reproducible and of high quality in terms of writing, grammar, presentation, etc.
+> okay~ let's play something interesting! This project aims to develop the time series forecasting model to predict stock prices. (maybe... I will try)
+
+
+
+```{r install packages}
+
+# install.packages("quantmod")
+library(quantmod)
+
+# Download stock data:
+getSymbols("AAPL", from = "2024-01-01", to = "2024-12-31")
+stock_data <- AAPL
+
+# AAPL is the NASDAQ ticker symbol for Apple Inc.
+
+```
+
+```{r Exploratory Data Analysis}
+
+library(ggplot2)
+library(tidyverse)
+
+# Convert to time series:
+stock_ts <- ts(stock_data$AAPL.Close, frequency = 252) # The US stock market has about 252 trading days per year, on average. 
+# visualize the data
+autoplot(stock_data$AAPL.Close) +
+  labs(title = "Apple's Daily Closing Prices", y = "Closing Price ($)")
+
+chartSeries(AAPL,TA = NULL)
+
+```
+```{r transform data to make it stationary}
+# one model we need to apply is "ARIMA", ARIMA stands for Autoregressive Integrated Moving Average. The ARIMA model combines three basic methods: Auto Regression (AR); In auto-regression the values of a given time series data are regressed on their own lagged values, which is indicated by the “p” value in the model. Differencing: This involves differencing the time series data to remove the trend and convert a non-stationary time series to a stationary one. Moving Average (MA): The MA nature of the model is represented by q values which is the number of lagged values of the error term.
+
+# therefore, we need to Testing and Ensuring Stationarity first.
+
+# install.packages("tseries")
+library(tseries)
+adf.test(stock_ts)
+#The Augmented Dickey-Fuller (ADF) test is a statistical test that determines if a time series is stationary. It's a common test used to analyze time series data. 
+
+# my P=0.5023.. it's not stationary. Google said I need to transform it to make it stationary before performing any time series analysis, typically by using techniques like differencing, detrending, or applying a logarithmic transformation.
+
+#and it seems like differencing is the most common one, so I'll go with differencing. 
+
+diff_stock_ts <- diff(stock_ts)
+adf.test(diff_stock_ts)
+
+# now, my p is 0.01. nice!
+
+```
+```{r fit data into an ARIMA Model}
+# install.packages("forecast")
+library(forecast)
+
+stock_model <- auto.arima(stock_ts)
+summary(stock_model)
+
+```
+```{r predict stock prices for the next 60 days}
+
+forecasted_prices <- forecast(stock_model, h = 60)
+
+# Plot the forecast
+autoplot(forecasted_prices) +
+  labs(title = "Stock Price Forecast for Next 60 Days",
+       x = "Time",
+       y = "Predicted Stock Price")
+print(forecasted_prices)
+
+# In an oversimplified way, I predicted the next 60 days of Apple stock... Whoever follows this procedure for stocks should be prepared to accept the fate of bankruptcy.
+
+```
+
