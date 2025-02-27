@@ -1,5 +1,85 @@
 ---
-title: "Portfolio 3-ML Project-Unsupervised Learning"
+title: "Portfolio 3-3D visualizations"
 ---
 
-> The projects should be numbered consecutively (i.e., in the order in which you began them), and should include for each project a description of the goal, the product (computer program, hand graph, computer graph, etc.), the data, and some interpretation. Reports must be reproducible and of high quality in terms of writing, grammar, presentation, etc.
+> This projects use the packages "scatterplot3d" and data(iris) + (trees) generate a scatter pot in the 3D space. 
+
+  - Setosa appears separate from the other two species, with lower values for both petal width and petal length. Versicolor lies in the middle, forming a transition group between Setosa and Virginica. Virginica has the highest petal length and width values.
+  
+  - As Sepal Length increases, Petal Length also increases, showing a positive correlation. Sepal Width has a weaker effect on Petal Length compared to Sepal Length.
+  
+  - The regression plane provides a visual trend line, showing how tree girth and height predict tree volume. As tree girth increases, tree volume increases. Tree height also contributes to volume, but its effect might be weaker compared to girth.
+
+
+```{r install packages}
+# install.packages("scatterplot3d")
+library(scatterplot3d)
+
+# pick a data
+data(iris)
+head(iris)
+
+```
+```{r basic plot}
+scatterplot3d(iris[,2:4]) # basic plot
+
+scatterplot3d(iris[,2:4], angle = 55) # change the point of view
+
+scatterplot3d(iris[,2:4],angle = 55, pch = 16, color="lightpink",
+              main="3D Scatter Plot",
+              xlab = "Sepal Length (cm)",
+              ylab = "Sepal Width (cm)",
+              zlab = "Petal Length (cm)") # change the title and X labels. 
+```
+```{r Change point shapes by groups and color}
+
+shapes = c(16, 17, 18) 
+colors <- c("#33ccff", "#ff3399", "#9900cc")
+colors <- colors[as.numeric(iris$Species)]
+shapes <- shapes[as.numeric(iris$Species)]
+scatterplot3d(iris[,2:4], pch = shapes, color=colors, grid=TRUE, box=FALSE) # change the appearance.
+
+# grid: a logical value. If TRUE, a grid is drawn on the plot.
+# box: a logical value. If TRUE, a box is drawn around the plot
+
+
+```
+```{r add more}
+
+scatterplot3d(iris[,2:4], pch = shapes, type="h", color=colors) # The argument type = “h” is use to see the x-y location of points.
+
+p3d <- scatterplot3d(iris[,2:4], pch = shapes, color=colors)
+legend("bottom", legend = levels(iris$Species), # add legend on bottom position. 
+      col =  c("#33ccff", "#ff3399", "#9900cc"), 
+      pch = c(16,17,18),# legend get it's shape. 
+      inset = -0.35, xpd = TRUE, horiz = TRUE)
+
+# overall, this plot visualizes the relationship between three variables in Iris dataset, using species as the grouping factor. 
+# Setosa appears separate from the other two species, with lower values for both petal width and petal length. Versicolor lies in the middle, forming a transition group between Setosa and Virginica. Virginica has the highest petal length and width values.
+
+```
+```{r add regression plane and supplementary points}
+# this chunk examines how tree girth and height predict tree volume, using a multiple linear regression model.
+
+data(trees) # this data provides measurements of the girth, height and volume for black cherry trees.
+trees
+
+trees3d <- scatterplot3d(trees, type = "h", color = "green",
+    angle=55, pch = 16)
+
+# Add regression plane
+regression <- lm(trees$Volume ~ trees$Girth + trees$Height)
+trees3d$plane3d(regression)
+
+# Add supplementary points
+trees3d$points3d(seq(10, 20, 2), seq(85, 60, -5), seq(60, 10, -10),
+    col = "red", type = "h", pch = 8)
+
+# Most green points align closely with the regression plane, indicating the model does well at predicting tree volume.
+# The red stars represent points where the predicted volume deviates significantly from the actual volume. Red vertical residual lines are longer, meaning the model struggles to accurately predict tree volume for these cases. This could be due to measurement errors, natural variability, etc.
+# The general upward trend suggests that both girth and height positively contribute to tree volume.
+
+# thanks a lot to this reference: https://www.sthda.com/english/wiki/scatterplot3d-3d-graphics-r-software-and-data-visualization.
+
+```
+

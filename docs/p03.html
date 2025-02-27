@@ -11,9 +11,9 @@
 
 
 
-<title>Portfolio 3</title>
+<title>Portfolio 3-3D visualizations</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -141,11 +141,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -174,8 +178,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -183,16 +187,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -293,18 +290,121 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Portfolio 3</h1>
+<h1 class="title toc-ignore">Portfolio 3-3D visualizations</h1>
 
 </div>
 
 
 <blockquote>
-<p>The projects should be numbered consecutively (i.e., in the order in
-which you began them), and should include for each project a description
-of the goal, the product (computer program, hand graph, computer graph,
-etc.), the data, and some interpretation. Reports must be reproducible
-and of high quality in terms of writing, grammar, presentation, etc.</p>
+<p>This projects use the packages “scatterplot3d” and data(iris) +
+(trees) generate a scatter pot in the 3D space.</p>
 </blockquote>
+<ul>
+<li><p>Setosa appears separate from the other two species, with lower
+values for both petal width and petal length. Versicolor lies in the
+middle, forming a transition group between Setosa and Virginica.
+Virginica has the highest petal length and width values.</p></li>
+<li><p>As Sepal Length increases, Petal Length also increases, showing a
+positive correlation. Sepal Width has a weaker effect on Petal Length
+compared to Sepal Length.</p></li>
+<li><p>The regression plane provides a visual trend line, showing how
+tree girth and height predict tree volume. As tree girth increases, tree
+volume increases. Tree height also contributes to volume, but its effect
+might be weaker compared to girth.</p></li>
+</ul>
+<pre class="r"><code># install.packages(&quot;scatterplot3d&quot;)
+library(scatterplot3d)
+
+# pick a data
+data(iris)
+head(iris)</code></pre>
+<pre><code>##   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+## 1          5.1         3.5          1.4         0.2  setosa
+## 2          4.9         3.0          1.4         0.2  setosa
+## 3          4.7         3.2          1.3         0.2  setosa
+## 4          4.6         3.1          1.5         0.2  setosa
+## 5          5.0         3.6          1.4         0.2  setosa
+## 6          5.4         3.9          1.7         0.4  setosa</code></pre>
+<pre class="r"><code>scatterplot3d(iris[,2:4]) # basic plot</code></pre>
+<p><img src="p03_files/figure-html/basic%20plot-1.png" width="672" /></p>
+<pre class="r"><code>scatterplot3d(iris[,2:4], angle = 55) # change the point of view</code></pre>
+<p><img src="p03_files/figure-html/basic%20plot-2.png" width="672" /></p>
+<pre class="r"><code>scatterplot3d(iris[,2:4],angle = 55, pch = 16, color=&quot;lightpink&quot;,
+              main=&quot;3D Scatter Plot&quot;,
+              xlab = &quot;Sepal Length (cm)&quot;,
+              ylab = &quot;Sepal Width (cm)&quot;,
+              zlab = &quot;Petal Length (cm)&quot;) # change the title and X labels. </code></pre>
+<p><img src="p03_files/figure-html/basic%20plot-3.png" width="672" /></p>
+<pre class="r"><code>shapes = c(16, 17, 18) 
+colors &lt;- c(&quot;#33ccff&quot;, &quot;#ff3399&quot;, &quot;#9900cc&quot;)
+colors &lt;- colors[as.numeric(iris$Species)]
+shapes &lt;- shapes[as.numeric(iris$Species)]
+scatterplot3d(iris[,2:4], pch = shapes, color=colors, grid=TRUE, box=FALSE) # change the appearance.</code></pre>
+<p><img src="p03_files/figure-html/Change%20point%20shapes%20by%20groups%20and%20color-1.png" width="672" /></p>
+<pre class="r"><code># grid: a logical value. If TRUE, a grid is drawn on the plot.
+# box: a logical value. If TRUE, a box is drawn around the plot</code></pre>
+<pre class="r"><code>scatterplot3d(iris[,2:4], pch = shapes, type=&quot;h&quot;, color=colors) # The argument type = “h” is use to see the x-y location of points.</code></pre>
+<p><img src="p03_files/figure-html/add%20more-1.png" width="672" /></p>
+<pre class="r"><code>p3d &lt;- scatterplot3d(iris[,2:4], pch = shapes, color=colors)
+legend(&quot;bottom&quot;, legend = levels(iris$Species), # add legend on bottom position. 
+      col =  c(&quot;#33ccff&quot;, &quot;#ff3399&quot;, &quot;#9900cc&quot;), 
+      pch = c(16,17,18),# legend get it&#39;s shape. 
+      inset = -0.35, xpd = TRUE, horiz = TRUE)</code></pre>
+<p><img src="p03_files/figure-html/add%20more-2.png" width="672" /></p>
+<pre class="r"><code># overall, this plot visualizes the relationship between three variables in Iris dataset, using species as the grouping factor. 
+# Setosa appears separate from the other two species, with lower values for both petal width and petal length. Versicolor lies in the middle, forming a transition group between Setosa and Virginica. Virginica has the highest petal length and width values.</code></pre>
+<pre class="r"><code># this chunk examines how tree girth and height predict tree volume, using a multiple linear regression model.
+
+data(trees) # this data provides measurements of the girth, height and volume for black cherry trees.
+trees</code></pre>
+<pre><code>##    Girth Height Volume
+## 1    8.3     70   10.3
+## 2    8.6     65   10.3
+## 3    8.8     63   10.2
+## 4   10.5     72   16.4
+## 5   10.7     81   18.8
+## 6   10.8     83   19.7
+## 7   11.0     66   15.6
+## 8   11.0     75   18.2
+## 9   11.1     80   22.6
+## 10  11.2     75   19.9
+## 11  11.3     79   24.2
+## 12  11.4     76   21.0
+## 13  11.4     76   21.4
+## 14  11.7     69   21.3
+## 15  12.0     75   19.1
+## 16  12.9     74   22.2
+## 17  12.9     85   33.8
+## 18  13.3     86   27.4
+## 19  13.7     71   25.7
+## 20  13.8     64   24.9
+## 21  14.0     78   34.5
+## 22  14.2     80   31.7
+## 23  14.5     74   36.3
+## 24  16.0     72   38.3
+## 25  16.3     77   42.6
+## 26  17.3     81   55.4
+## 27  17.5     82   55.7
+## 28  17.9     80   58.3
+## 29  18.0     80   51.5
+## 30  18.0     80   51.0
+## 31  20.6     87   77.0</code></pre>
+<pre class="r"><code>trees3d &lt;- scatterplot3d(trees, type = &quot;h&quot;, color = &quot;green&quot;,
+    angle=55, pch = 16)
+
+# Add regression plane
+regression &lt;- lm(trees$Volume ~ trees$Girth + trees$Height)
+trees3d$plane3d(regression)
+
+# Add supplementary points
+trees3d$points3d(seq(10, 20, 2), seq(85, 60, -5), seq(60, 10, -10),
+    col = &quot;red&quot;, type = &quot;h&quot;, pch = 8)</code></pre>
+<p><img src="p03_files/figure-html/add%20regression%20plane%20and%20supplementary%20points-1.png" width="672" /></p>
+<pre class="r"><code># Most green points align closely with the regression plane, indicating the model does well at predicting tree volume.
+# The red stars represent points where the predicted volume deviates significantly from the actual volume. Red vertical residual lines are longer, meaning the model struggles to accurately predict tree volume for these cases. This could be due to measurement errors, natural variability, etc.
+# The general upward trend suggests that both girth and height positively contribute to tree volume.
+
+# thanks a lot to this reference: https://www.sthda.com/english/wiki/scatterplot3d-3d-graphics-r-software-and-data-visualization.</code></pre>
 
 
 
