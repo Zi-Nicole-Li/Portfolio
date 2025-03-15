@@ -11,9 +11,9 @@
 
 
 
-<title>Portfolio 4</title>
+<title>Portfolio 4 - Sentiment Analysis on Twitter Data</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -32,6 +32,12 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet" />
+<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<link href="site_libs/wordcloud2-0.0.1/wordcloud.css" rel="stylesheet" />
+<script src="site_libs/wordcloud2-0.0.1/wordcloud2-all.js"></script>
+<script src="site_libs/wordcloud2-0.0.1/hover.js"></script>
+<script src="site_libs/wordcloud2-binding-0.2.1/wordcloud2.js"></script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -141,11 +147,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -174,8 +184,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -183,16 +193,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -293,18 +296,157 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Portfolio 4</h1>
+<h1 class="title toc-ignore">Portfolio 4 - Sentiment Analysis on Twitter
+Data</h1>
 
 </div>
 
 
 <blockquote>
-<p>The projects should be numbered consecutively (i.e., in the order in
-which you began them), and should include for each project a description
-of the goal, the product (computer program, hand graph, computer graph,
-etc.), the data, and some interpretation. Reports must be reproducible
-and of high quality in terms of writing, grammar, presentation, etc.</p>
+<p>This project analyze sentiments from Twitter. Applying NLP to
+determine the overall sentiment (positive, negative, or neutral). And
+extract meaningful terms and visualize common terms using word
+clouds.</p>
 </blockquote>
+<pre class="r"><code># install some packages. no need to install twice, so a &quot;#&quot; here.
+# install.packages(&quot;tidytext&quot;)
+# install.packages(&quot;wordcloud2&quot;)
+
+# Load Libraries
+library(tidyverse)</code></pre>
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+## ✔ dplyr     1.1.4     ✔ readr     2.1.5
+## ✔ forcats   1.0.0     ✔ stringr   1.5.1
+## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
+## ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+## ✔ purrr     1.0.2     
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()
+## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+<pre class="r"><code>library(tidytext)
+library(ggplot2)
+library(wordcloud2)
+library(shiny)
+
+
+# Sample Data (not real data.)
+text_data &lt;- tibble(
+  id = 1:5,
+  text = c(
+    &quot;I love the new version! It&#39;s amazing.&quot;,
+    &quot;The update is terrible and annoying.&quot;,
+    &quot;Not sure about the new feature, it&#39;s confusing.&quot;,
+    &quot;I really enjoy using AI. the best!&quot;,
+    &quot;AI destroys students&#39; motivation to learn. Very disappointed.&quot;
+  )
+)
+
+# Clean and tokenize the text
+clean_data &lt;- text_data %&gt;%
+  mutate(text = tolower(text)) %&gt;%  # Convert to lowercase, just for safe.. 
+  unnest_tokens(word, text) %&gt;%     
+  anti_join(stop_words)   </code></pre>
+<pre><code>## Joining with `by = join_by(word)`</code></pre>
+<pre class="r"><code># Load the Bing sentiment lexicon
+bing_sentiments &lt;- get_sentiments(&quot;bing&quot;)
+
+# Join sentiment data
+sentiment_data &lt;- clean_data %&gt;%
+  inner_join(bing_sentiments, by = &quot;word&quot;) %&gt;%
+  count(sentiment, word, sort = TRUE)
+
+print(sentiment_data)</code></pre>
+<pre><code>## # A tibble: 7 × 3
+##   sentiment word             n
+##   &lt;chr&gt;     &lt;chr&gt;        &lt;int&gt;
+## 1 negative  annoying         1
+## 2 negative  confusing        1
+## 3 negative  disappointed     1
+## 4 negative  terrible         1
+## 5 positive  amazing          1
+## 6 positive  enjoy            1
+## 7 positive  love             1</code></pre>
+<pre class="r"><code>print(sentiment_data)</code></pre>
+<pre><code>## # A tibble: 7 × 3
+##   sentiment word             n
+##   &lt;chr&gt;     &lt;chr&gt;        &lt;int&gt;
+## 1 negative  annoying         1
+## 2 negative  confusing        1
+## 3 negative  disappointed     1
+## 4 negative  terrible         1
+## 5 positive  amazing          1
+## 6 positive  enjoy            1
+## 7 positive  love             1</code></pre>
+<pre class="r"><code># Rename the frequency column to &#39;freq&#39; and ensure it&#39;s numeric
+sentiment_data_clean &lt;- sentiment_data %&gt;%
+  filter(!is.na(word)) %&gt;%
+  mutate(freq = as.numeric(n)) %&gt;%     # Rename and ensure numeric
+  select(word, freq, sentiment) %&gt;%    # Select only necessary columns
+  filter(!is.na(freq))                 # Remove &quot;NA&quot;
+
+print(sentiment_data_clean)</code></pre>
+<pre><code>## # A tibble: 7 × 3
+##   word          freq sentiment
+##   &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;    
+## 1 annoying         1 negative 
+## 2 confusing        1 negative 
+## 3 disappointed     1 negative 
+## 4 terrible         1 negative 
+## 5 amazing          1 positive 
+## 6 enjoy            1 positive 
+## 7 love             1 positive</code></pre>
+<pre class="r"><code># Create a word cloud for all words
+wordcloud2(data = clean_data %&gt;% count(word, sort = TRUE) %&gt;% 
+             rename(freq = n) %&gt;% filter(!is.na(freq)))</code></pre>
+<div class="wordcloud2 html-widget html-fill-item" id="htmlwidget-408c3312a38098857817" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-408c3312a38098857817">{"x":{"word":["ai","amazing","annoying","confusing","destroys","disappointed","enjoy","feature","learn","love","motivation","students","terrible","update","version"],"freq":[2,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":90,"backgroundColor":"white","gridSize":0,"minRotation":-0.7853981633974483,"maxRotation":0.7853981633974483,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<pre class="r"><code># Positive words cloud
+positive_words &lt;- sentiment_data_clean %&gt;% filter(sentiment == &quot;positive&quot;)
+if(nrow(positive_words) &gt; 0) {
+  wordcloud2(data = positive_words %&gt;% select(word, freq), color = &quot;lightgreen&quot;)
+} else {
+  print(&quot;No positive words found.&quot;)
+}</code></pre>
+<div class="wordcloud2 html-widget html-fill-item" id="htmlwidget-89947875d27a4522b5a1" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-89947875d27a4522b5a1">{"x":{"word":["amazing","enjoy","love"],"freq":[1,1,1],"fontFamily":"Segoe UI","fontWeight":"bold","color":"lightgreen","minSize":0,"weightFactor":180,"backgroundColor":"white","gridSize":0,"minRotation":-0.7853981633974483,"maxRotation":0.7853981633974483,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<pre class="r"><code># Negative words cloud
+negative_words &lt;- sentiment_data_clean %&gt;% filter(sentiment == &quot;negative&quot;)
+if(nrow(negative_words) &gt; 0) {
+  wordcloud2(data = negative_words %&gt;% select(word, freq), color = &quot;pink&quot;)
+} else {
+  print(&quot;No negative words found.&quot;)
+}</code></pre>
+<div class="wordcloud2 html-widget html-fill-item" id="htmlwidget-8e145f6627be0321b089" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-8e145f6627be0321b089">{"x":{"word":["annoying","confusing","disappointed","terrible"],"freq":[1,1,1,1],"fontFamily":"Segoe UI","fontWeight":"bold","color":"pink","minSize":0,"weightFactor":180,"backgroundColor":"white","gridSize":0,"minRotation":-0.7853981633974483,"maxRotation":0.7853981633974483,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<pre class="r"><code># solved. now there&#39;s something in my second and third wordcloud plot. </code></pre>
+<pre class="r"><code># I got empty plot for positive &amp; negative sentiments, so this chunk is to check why that happens. 
+print(sentiment_data)</code></pre>
+<pre><code>## # A tibble: 7 × 3
+##   sentiment word             n
+##   &lt;chr&gt;     &lt;chr&gt;        &lt;int&gt;
+## 1 negative  annoying         1
+## 2 negative  confusing        1
+## 3 negative  disappointed     1
+## 4 negative  terrible         1
+## 5 positive  amazing          1
+## 6 positive  enjoy            1
+## 7 positive  love             1</code></pre>
+<pre class="r"><code>bing_sentiments %&gt;%
+  filter(word %in% clean_data$word)</code></pre>
+<pre><code>## # A tibble: 7 × 2
+##   word         sentiment
+##   &lt;chr&gt;        &lt;chr&gt;    
+## 1 amazing      positive 
+## 2 annoying     negative 
+## 3 confusing    negative 
+## 4 disappointed negative 
+## 5 enjoy        positive 
+## 6 love         positive 
+## 7 terrible     negative</code></pre>
+<pre class="r"><code>setdiff(clean_data$word, bing_sentiments$word)</code></pre>
+<pre><code>## [1] &quot;version&quot;    &quot;update&quot;     &quot;feature&quot;    &quot;ai&quot;         &quot;destroys&quot;  
+## [6] &quot;students&quot;   &quot;motivation&quot; &quot;learn&quot;</code></pre>
 
 
 

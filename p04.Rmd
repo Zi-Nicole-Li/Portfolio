@@ -1,5 +1,92 @@
 ---
-title: "Portfolio 4"
+title: "Portfolio 4 - Sentiment Analysis on Twitter Data"
 ---
 
-> The projects should be numbered consecutively (i.e., in the order in which you began them), and should include for each project a description of the goal, the product (computer program, hand graph, computer graph, etc.), the data, and some interpretation. Reports must be reproducible and of high quality in terms of writing, grammar, presentation, etc.
+> This project analyze sentiments from Twitter. Applying NLP to determine the overall sentiment (positive, negative, or neutral). And extract meaningful terms and visualize common terms using word clouds.
+
+
+```{r}
+
+# install some packages. no need to install twice, so a "#" here.
+# install.packages("tidytext")
+# install.packages("wordcloud2")
+
+# Load Libraries
+library(tidyverse)
+library(tidytext)
+library(ggplot2)
+library(wordcloud2)
+library(shiny)
+
+
+# Sample Data (not real data.)
+text_data <- tibble(
+  id = 1:5,
+  text = c(
+    "I love the new version! It's amazing.",
+    "The update is terrible and annoying.",
+    "Not sure about the new feature, it's confusing.",
+    "I really enjoy using AI. the best!",
+    "AI destroys students' motivation to learn. Very disappointed."
+  )
+)
+
+# Clean and tokenize the text
+clean_data <- text_data %>%
+  mutate(text = tolower(text)) %>%  # Convert to lowercase, just for safe.. 
+  unnest_tokens(word, text) %>%     
+  anti_join(stop_words)   
+
+# Load the Bing sentiment lexicon
+bing_sentiments <- get_sentiments("bing")
+
+# Join sentiment data
+sentiment_data <- clean_data %>%
+  inner_join(bing_sentiments, by = "word") %>%
+  count(sentiment, word, sort = TRUE)
+
+print(sentiment_data)
+
+print(sentiment_data)
+
+# Rename the frequency column to 'freq' and ensure it's numeric
+sentiment_data_clean <- sentiment_data %>%
+  filter(!is.na(word)) %>%
+  mutate(freq = as.numeric(n)) %>%     # Rename and ensure numeric
+  select(word, freq, sentiment) %>%    # Select only necessary columns
+  filter(!is.na(freq))                 # Remove "NA"
+
+print(sentiment_data_clean)
+
+# Create a word cloud for all words
+wordcloud2(data = clean_data %>% count(word, sort = TRUE) %>% 
+             rename(freq = n) %>% filter(!is.na(freq)))
+
+# Positive words cloud
+positive_words <- sentiment_data_clean %>% filter(sentiment == "positive")
+if(nrow(positive_words) > 0) {
+  wordcloud2(data = positive_words %>% select(word, freq), color = "lightgreen")
+} else {
+  print("No positive words found.")
+}
+
+# Negative words cloud
+negative_words <- sentiment_data_clean %>% filter(sentiment == "negative")
+if(nrow(negative_words) > 0) {
+  wordcloud2(data = negative_words %>% select(word, freq), color = "pink")
+} else {
+  print("No negative words found.")
+}
+
+# solved. now there's something in my second and third wordcloud plot. 
+```
+```{r}
+# I got empty plot for positive & negative sentiments, so this chunk is to check why that happens. 
+print(sentiment_data)
+
+bing_sentiments %>%
+  filter(word %in% clean_data$word)
+
+setdiff(clean_data$word, bing_sentiments$word)
+```
+
