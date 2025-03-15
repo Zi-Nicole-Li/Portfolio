@@ -11,7 +11,7 @@
 
 
 
-<title>Portfolio 4 - Sentiment Analysis on Twitter Data</title>
+<title>Sentiment Analysis with Word Cloud</title>
 
 <script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -296,8 +296,7 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Portfolio 4 - Sentiment Analysis on Twitter
-Data</h1>
+<h1 class="title toc-ignore">Sentiment Analysis with Word Cloud</h1>
 
 </div>
 
@@ -311,6 +310,8 @@ clouds.</p>
 <pre class="r"><code># install some packages. no need to install twice, so a &quot;#&quot; here.
 # install.packages(&quot;tidytext&quot;)
 # install.packages(&quot;wordcloud2&quot;)
+
+# install.packages(&quot;webshot2&quot;)
 
 # Load Libraries
 library(tidyverse)</code></pre>
@@ -328,6 +329,8 @@ library(tidyverse)</code></pre>
 library(ggplot2)
 library(wordcloud2)
 library(shiny)
+library(webshot2)
+library(htmlwidgets)
 
 
 # Sample Data (not real data.)
@@ -399,17 +402,17 @@ print(sentiment_data_clean)</code></pre>
 <pre class="r"><code># Create a word cloud for all words
 wordcloud2(data = clean_data %&gt;% count(word, sort = TRUE) %&gt;% 
              rename(freq = n) %&gt;% filter(!is.na(freq)))</code></pre>
-<div class="wordcloud2 html-widget html-fill-item" id="htmlwidget-408c3312a38098857817" style="width:672px;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-408c3312a38098857817">{"x":{"word":["ai","amazing","annoying","confusing","destroys","disappointed","enjoy","feature","learn","love","motivation","students","terrible","update","version"],"freq":[2,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":90,"backgroundColor":"white","gridSize":0,"minRotation":-0.7853981633974483,"maxRotation":0.7853981633974483,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<div class="wordcloud2 html-widget html-fill-item" id="htmlwidget-accf8924a0faf7697737" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-accf8924a0faf7697737">{"x":{"word":["ai","amazing","annoying","confusing","destroys","disappointed","enjoy","feature","learn","love","motivation","students","terrible","update","version"],"freq":[2,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":90,"backgroundColor":"white","gridSize":0,"minRotation":-0.7853981633974483,"maxRotation":0.7853981633974483,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
 <pre class="r"><code># Positive words cloud
 positive_words &lt;- sentiment_data_clean %&gt;% filter(sentiment == &quot;positive&quot;)
 if(nrow(positive_words) &gt; 0) {
-  wordcloud2(data = positive_words %&gt;% select(word, freq), color = &quot;lightgreen&quot;)
+  wordcloud2(data = positive_words %&gt;% select(word, freq), color = &quot;lightblue&quot;)
 } else {
   print(&quot;No positive words found.&quot;)
 }</code></pre>
-<div class="wordcloud2 html-widget html-fill-item" id="htmlwidget-89947875d27a4522b5a1" style="width:672px;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-89947875d27a4522b5a1">{"x":{"word":["amazing","enjoy","love"],"freq":[1,1,1],"fontFamily":"Segoe UI","fontWeight":"bold","color":"lightgreen","minSize":0,"weightFactor":180,"backgroundColor":"white","gridSize":0,"minRotation":-0.7853981633974483,"maxRotation":0.7853981633974483,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<div class="wordcloud2 html-widget html-fill-item" id="htmlwidget-999f2aed0b50795be1d9" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-999f2aed0b50795be1d9">{"x":{"word":["amazing","enjoy","love"],"freq":[1,1,1],"fontFamily":"Segoe UI","fontWeight":"bold","color":"lightblue","minSize":0,"weightFactor":180,"backgroundColor":"white","gridSize":0,"minRotation":-0.7853981633974483,"maxRotation":0.7853981633974483,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
 <pre class="r"><code># Negative words cloud
 negative_words &lt;- sentiment_data_clean %&gt;% filter(sentiment == &quot;negative&quot;)
 if(nrow(negative_words) &gt; 0) {
@@ -417,9 +420,27 @@ if(nrow(negative_words) &gt; 0) {
 } else {
   print(&quot;No negative words found.&quot;)
 }</code></pre>
-<div class="wordcloud2 html-widget html-fill-item" id="htmlwidget-8e145f6627be0321b089" style="width:672px;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-8e145f6627be0321b089">{"x":{"word":["annoying","confusing","disappointed","terrible"],"freq":[1,1,1,1],"fontFamily":"Segoe UI","fontWeight":"bold","color":"pink","minSize":0,"weightFactor":180,"backgroundColor":"white","gridSize":0,"minRotation":-0.7853981633974483,"maxRotation":0.7853981633974483,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
-<pre class="r"><code># solved. now there&#39;s something in my second and third wordcloud plot. </code></pre>
+<div class="wordcloud2 html-widget html-fill-item" id="htmlwidget-3930d7dabd85a13ecbca" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-3930d7dabd85a13ecbca">{"x":{"word":["annoying","confusing","disappointed","terrible"],"freq":[1,1,1,1],"fontFamily":"Segoe UI","fontWeight":"bold","color":"pink","minSize":0,"weightFactor":180,"backgroundColor":"white","gridSize":0,"minRotation":-0.7853981633974483,"maxRotation":0.7853981633974483,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<pre class="r"><code># Ha?! I don&#39;t have pic of negative and positive terms in my knit file. (Solved.)
+# Save and Insert Word Clouds as Images
+
+# Positive Word Cloud
+wordcloud2(positive_words, color = &quot;lightgreen&quot;) %&gt;%
+  saveWidget(&quot;positive_wordcloud.html&quot;, selfcontained = TRUE)
+
+webshot2::webshot(&quot;positive_wordcloud.html&quot;, &quot;positive_wordcloud.png&quot;, vwidth = 800, vheight = 600)</code></pre>
+<pre><code>## file:////Users/zili/Documents/GitHub/Portfolio/positive_wordcloud.html screenshot completed</code></pre>
+<p><img src="p04_files/figure-html/unnamed-chunk-1-4.png" width="672" /></p>
+<pre class="r"><code># Negative Word Cloud
+wordcloud2(negative_words, color = &quot;pink&quot;) %&gt;%
+  saveWidget(&quot;negative_wordcloud.html&quot;, selfcontained = TRUE)
+
+webshot2::webshot(&quot;negative_wordcloud.html&quot;, &quot;negative_wordcloud.png&quot;, vwidth = 800, vheight = 600)</code></pre>
+<pre><code>## file:////Users/zili/Documents/GitHub/Portfolio/negative_wordcloud.html screenshot completed</code></pre>
+<p><img src="p04_files/figure-html/unnamed-chunk-1-5.png" width="672" /></p>
+<pre class="r"><code># solved. now there&#39;s something in my second and third wordcloud plot. 
+# as well as in my knit file. </code></pre>
 <pre class="r"><code># I got empty plot for positive &amp; negative sentiments, so this chunk is to check why that happens. 
 print(sentiment_data)</code></pre>
 <pre><code>## # A tibble: 7 × 3
