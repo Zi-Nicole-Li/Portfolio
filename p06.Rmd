@@ -1,5 +1,69 @@
 ---
-title: "Portfolio 6"
+title: "Portfolio 6-Geographic Mapping of Earthquakes by Location, Depth, and Magnitude"
+author: "Zi Li"
+date: "2025-05-01"
+output: html_document
 ---
+> This project explore the spatial distribution, magnitude, and depth of earthquakes in the Fiji region using an interactive map. The goal is to visually identify patterns in earthquake characteristics such as depth and strength based on their geographic location.
 
-> The projects should be numbered consecutively (i.e., in the order in which you began them), and should include for each project a description of the goal, the product (computer program, hand graph, computer graph, etc.), the data, and some interpretation. Reports must be reproducible and of high quality in terms of writing, grammar, presentation, etc.
+```{r}
+library(ggplot2)
+data("quakes")
+
+# scatter plot of earthquake locations
+ggplot(quakes, aes(x = long, y = lat)) +
+  geom_point(alpha = 0.6) +
+  labs(
+    title = "Earthquake Locations (Fiji Region)",
+    x = "Longitude",
+    y = "Latitude"
+  ) +
+  theme_minimal()
+
+# color by depth, size by magnitude
+ggplot(quakes, aes(x = long, y = lat)) +
+  geom_point(aes(color = depth, size = mag), alpha = 0.4) +
+  scale_color_viridis_c() +
+  scale_size_continuous(range = c(1, 5)) +
+  labs(
+    title = "Earthquake Map: Depth and Magnitude",
+    x = "Longitude",
+    y = "Latitude",
+    color = "Depth (km)",
+    size = "Magnitude"
+  ) +
+  theme_minimal()
+# Deepest earthquakes (Depth > 600 km) tend to occur around longitude 180° to 185°, latitude -15° to -25°. 
+# Shallow earthquakes (Depth < 100 km) tend to cluster around longitude 165° to 175°, latitude -10° to -20°.
+
+
+```
+## interactive map
+```{r something fancy}
+
+# install.packages("leaflet")
+library(leaflet)
+
+leaflet(quakes) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng = ~long,
+    lat = ~lat,
+    radius = ~mag * 2,
+    color = ~colorNumeric("viridis", quakes$depth)(depth),
+    stroke = FALSE,
+    fillOpacity = 0.7,
+    popup = ~paste("Mag:", mag, "<br>Depth:", depth, "km")
+  ) %>%
+  addLegend(
+    "bottomright",
+    pal = colorNumeric("viridis", quakes$depth),
+    values = ~depth,
+    title = "Depth (km)"
+  )
+
+# The size of each circle is proportional to the earthquake’s magnitude. Bigger quake → larger circle.
+# The color of each circle is based on its depth using a viridis color scale.
+
+```
+
