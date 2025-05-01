@@ -1,5 +1,53 @@
 ---
-title: "Portfolio 7"
+title: "Portfolio 7- Survival Analysis using lung cancer patients"
+date: "2025-05-01"
+output: html_document
 ---
+> This project explore how patient characteristics— age, sex, and performance status (ph.ecog)—influence survival time in lung cancer patients. ph.ecog is a strong, statistically significant predictor:Patients with worse physical condition had a 63%–70% higher risk of death per unit increase. Sex and age were not significant predictors in the interaction model, though sex alone was significant.
 
-> The projects should be numbered consecutively (i.e., in the order in which you began them), and should include for each project a description of the goal, the product (computer program, hand graph, computer graph, etc.), the data, and some interpretation. Reports must be reproducible and of high quality in terms of writing, grammar, presentation, etc.
+```{r}
+# install.packages("survminer")
+library(survival)
+library(survminer) 
+
+head(lung)
+str(lung)
+
+#Create a survival object
+lung$surv_obj <- with(lung, Surv(time, status == 2))
+# by sex
+fit_sex <- survfit(surv_obj ~ sex, data = lung)
+
+# install.packages("xfun")
+ggsurvplot(
+  fit_sex,
+  data = lung,
+  pval = TRUE,             
+  conf.int = TRUE,          
+  risk.table = TRUE,  
+  legend.labs = c("Male", "Female"),
+  xlab = "Days",
+  ylab = "Survival Probability",
+  title = "Kaplan-Meier Survival Curve by Sex",
+  palette = "Dark2"
+)
+# Females consistently show higher survival probabilities than males (green line) across the entire follow-up period.
+# Visually, the median survival time is: Females: Around ~450 days; Males: Around ~300 days
+# 50% of female patients survived longer than ~450 days, whereas for males, 50% died before ~300 days.
+
+```
+
+## Cox proportional hazards model
+```{r}
+cox_model <- coxph(surv_obj ~ age + sex + ph.ecog, data = lung)
+summary(cox_model)
+# Being female is associated with a 42.5% lower hazard of death compared to males.
+# Age does not reach significance at p < .05
+
+cox_interaction <- coxph(surv_obj ~ age * sex + ph.ecog, data = lung)
+summary(cox_interaction)
+# Each 1-point increase in ECOG score (worse) increases hazard of death by 63.6%.
+# the effect of age on survival does not meaningfully differ by sex.
+
+```
+
