@@ -1,5 +1,65 @@
 ---
-title: "Portfolio 5"
+title: "Portfolio 5-Wage Prediction and Demographic Trends"
+author: "Zi Li"
+date: "2025-05-01"
+output: html_document
 ---
 
-> The projects should be numbered consecutively (i.e., in the order in which you began them), and should include for each project a description of the goal, the product (computer program, hand graph, computer graph, etc.), the data, and some interpretation. Reports must be reproducible and of high quality in terms of writing, grammar, presentation, etc.
+> The goal of this project was to explore how education level, age influence wage outcomes. I built both a regression model (to predict exact wages) and a classification model (to predict whether someone earns a high wage) using decision trees.
+
+```{r}
+#install.packages("ISLR")
+#install.packages("rpart")
+#install.packages("rpart.plot")
+
+library(ISLR)
+library(tidyverse)
+library(rpart)
+library(rpart.plot)
+
+data(Wage)
+glimpse(Wage)
+
+```
+## Exploratory Data Analysis
+```{r}
+ggplot(Wage, aes(x = wage)) + geom_histogram(bins = 30, fill = "skyblue", color = "black")
+
+# Boxplot: wage by education
+ggplot(Wage, aes(x = education, y = wage)) + geom_boxplot()
+
+# Age vs. wage
+ggplot(Wage, aes(x = age, y = wage)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", se = FALSE, color = "red")
+
+model1 <- lm(wage ~ age + education + jobclass, data = Wage)
+summary(model1)
+# For each one-year increase in age, wage increases by $0.56, holding education and jobclass constant.
+# Compared to the baseline group ("<HS Grad"):High school grads earn $11.20 more; Some college grads earn $23.33 more; College grads earn $38.39 more; Advanced degree holders earn $62.91 more.
+
+model_poly <- lm(wage ~ poly(age, 2) + education + jobclass, data = Wage)
+summary(model_poly)
+# Wage increases with age up to a point, then flattens or declines slightly. This model explains 28.9% of the wage variability, a slight improvement over the linear model.
+
+# overall, People with more education earn significantly more. Information jobs pay more than manual jobs. Wage increases with age, but it likely peaks and then levels off.
+
+
+
+```
+## Decision Tree & Classification 
+```{r}
+tree_model <- rpart(wage ~ age + education + jobclass, data = Wage, method = "anova")
+rpart.plot(tree_model)
+
+Wage$high_wage <- ifelse(Wage$wage > 250, "yes", "no")
+Wage$high_wage <- as.factor(Wage$high_wage)
+
+tree_class <- rpart(high_wage ~ age + education + jobclass, data = Wage, method = "class")
+rpart.plot(tree_class)
+
+# People who are college grads, over 33, tend to earn about $155k, while those with lower education and under 26 earn closer to $74k–$111k on average.
+# People with less than a college degree and age < 30 is most likely not high earners. People with college degrees or advanced degrees, age > 35,has the higher likelihood of being high earners.
+
+```
+

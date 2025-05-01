@@ -9,11 +9,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Zi Li" />
 
+<meta name="date" content="2025-05-01" />
 
-<title>Portfolio 5</title>
+<title>Portfolio 5-Wage Prediction and Demographic Trends</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -141,11 +143,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -174,8 +180,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -183,16 +189,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -293,18 +292,139 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Portfolio 5</h1>
+<h1 class="title toc-ignore">Portfolio 5-Wage Prediction and Demographic
+Trends</h1>
+<h4 class="author">Zi Li</h4>
+<h4 class="date">2025-05-01</h4>
 
 </div>
 
 
 <blockquote>
-<p>The projects should be numbered consecutively (i.e., in the order in
-which you began them), and should include for each project a description
-of the goal, the product (computer program, hand graph, computer graph,
-etc.), the data, and some interpretation. Reports must be reproducible
-and of high quality in terms of writing, grammar, presentation, etc.</p>
+<p>The goal of this project was to explore how education level, age
+influence wage outcomes. I built both a regression model (to predict
+exact wages) and a classification model (to predict whether someone
+earns a high wage) using decision trees.</p>
 </blockquote>
+<pre class="r"><code>#install.packages(&quot;ISLR&quot;)
+#install.packages(&quot;rpart&quot;)
+#install.packages(&quot;rpart.plot&quot;)
+
+library(ISLR)
+library(tidyverse)</code></pre>
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+## ✔ dplyr     1.1.4     ✔ readr     2.1.5
+## ✔ forcats   1.0.0     ✔ stringr   1.5.1
+## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
+## ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+## ✔ purrr     1.0.4     
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()
+## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+<pre class="r"><code>library(rpart)
+library(rpart.plot)
+
+data(Wage)
+glimpse(Wage)</code></pre>
+<pre><code>## Rows: 3,000
+## Columns: 11
+## $ year       &lt;int&gt; 2006, 2004, 2003, 2003, 2005, 2008, 2009, 2008, 2006, 2004,…
+## $ age        &lt;int&gt; 18, 24, 45, 43, 50, 54, 44, 30, 41, 52, 45, 34, 35, 39, 54,…
+## $ maritl     &lt;fct&gt; 1. Never Married, 1. Never Married, 2. Married, 2. Married,…
+## $ race       &lt;fct&gt; 1. White, 1. White, 1. White, 3. Asian, 1. White, 1. White,…
+## $ education  &lt;fct&gt; 1. &lt; HS Grad, 4. College Grad, 3. Some College, 4. College …
+## $ region     &lt;fct&gt; 2. Middle Atlantic, 2. Middle Atlantic, 2. Middle Atlantic,…
+## $ jobclass   &lt;fct&gt; 1. Industrial, 2. Information, 1. Industrial, 2. Informatio…
+## $ health     &lt;fct&gt; 1. &lt;=Good, 2. &gt;=Very Good, 1. &lt;=Good, 2. &gt;=Very Good, 1. &lt;=…
+## $ health_ins &lt;fct&gt; 2. No, 2. No, 1. Yes, 1. Yes, 1. Yes, 1. Yes, 1. Yes, 1. Ye…
+## $ logwage    &lt;dbl&gt; 4.318063, 4.255273, 4.875061, 5.041393, 4.318063, 4.845098,…
+## $ wage       &lt;dbl&gt; 75.04315, 70.47602, 130.98218, 154.68529, 75.04315, 127.115…</code></pre>
+<div id="exploratory-data-analysis" class="section level2">
+<h2>Exploratory Data Analysis</h2>
+<pre class="r"><code>ggplot(Wage, aes(x = wage)) + geom_histogram(bins = 30, fill = &quot;skyblue&quot;, color = &quot;black&quot;)</code></pre>
+<p><img src="p05_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<pre class="r"><code># Boxplot: wage by education
+ggplot(Wage, aes(x = education, y = wage)) + geom_boxplot()</code></pre>
+<p><img src="p05_files/figure-html/unnamed-chunk-2-2.png" width="672" /></p>
+<pre class="r"><code># Age vs. wage
+ggplot(Wage, aes(x = age, y = wage)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = &quot;lm&quot;, se = FALSE, color = &quot;red&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using formula = &#39;y ~ x&#39;</code></pre>
+<p><img src="p05_files/figure-html/unnamed-chunk-2-3.png" width="672" /></p>
+<pre class="r"><code>model1 &lt;- lm(wage ~ age + education + jobclass, data = Wage)
+summary(model1)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = wage ~ age + education + jobclass, data = Wage)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -106.656  -20.043   -3.488   14.908  217.504 
+## 
+## Coefficients:
+##                             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                 59.58000    3.24874  18.339  &lt; 2e-16 ***
+## age                          0.55537    0.05725   9.701  &lt; 2e-16 ***
+## education2. HS Grad         11.20088    2.47733   4.521 6.38e-06 ***
+## education3. Some College    23.33036    2.61811   8.911  &lt; 2e-16 ***
+## education4. College Grad    38.38622    2.62045  14.649  &lt; 2e-16 ***
+## education5. Advanced Degree 62.91152    2.87492  21.883  &lt; 2e-16 ***
+## jobclass2. Information       4.51067    1.38091   3.266   0.0011 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 35.89 on 2993 degrees of freedom
+## Multiple R-squared:  0.2619, Adjusted R-squared:  0.2605 
+## F-statistic:   177 on 6 and 2993 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code># For each one-year increase in age, wage increases by $0.56, holding education and jobclass constant.
+# Compared to the baseline group (&quot;&lt;HS Grad&quot;):High school grads earn $11.20 more; Some college grads earn $23.33 more; College grads earn $38.39 more; Advanced degree holders earn $62.91 more.
+
+model_poly &lt;- lm(wage ~ poly(age, 2) + education + jobclass, data = Wage)
+summary(model_poly)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = wage ~ poly(age, 2) + education + jobclass, data = Wage)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -111.069  -19.741   -3.182   14.913  211.799 
+## 
+## Coefficients:
+##                             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                   84.303      2.191  38.476  &lt; 2e-16 ***
+## poly(age, 2)1                354.229     35.522   9.972  &lt; 2e-16 ***
+## poly(age, 2)2               -378.226     35.396 -10.685  &lt; 2e-16 ***
+## education2. HS Grad           10.574      2.432   4.347 1.43e-05 ***
+## education3. Some College      22.425      2.571   8.721  &lt; 2e-16 ***
+## education4. College Grad      36.682      2.577  14.233  &lt; 2e-16 ***
+## education5. Advanced Degree   60.767      2.829  21.479  &lt; 2e-16 ***
+## jobclass2. Information         4.357      1.356   3.214  0.00132 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 35.23 on 2992 degrees of freedom
+## Multiple R-squared:  0.2891, Adjusted R-squared:  0.2874 
+## F-statistic: 173.8 on 7 and 2992 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code># Wage increases with age up to a point, then flattens or declines slightly. This model explains 28.9% of the wage variability, a slight improvement over the linear model.
+
+# overall, People with more education earn significantly more. Information jobs pay more than manual jobs. Wage increases with age, but it likely peaks and then levels off.</code></pre>
+</div>
+<div id="decision-tree-classification" class="section level2">
+<h2>Decision Tree &amp; Classification</h2>
+<pre class="r"><code>tree_model &lt;- rpart(wage ~ age + education + jobclass, data = Wage, method = &quot;anova&quot;)
+rpart.plot(tree_model)</code></pre>
+<p><img src="p05_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code>Wage$high_wage &lt;- ifelse(Wage$wage &gt; 250, &quot;yes&quot;, &quot;no&quot;)
+Wage$high_wage &lt;- as.factor(Wage$high_wage)
+
+tree_class &lt;- rpart(high_wage ~ age + education + jobclass, data = Wage, method = &quot;class&quot;)
+rpart.plot(tree_class)</code></pre>
+<p><img src="p05_files/figure-html/unnamed-chunk-3-2.png" width="672" /></p>
+<pre class="r"><code># People who are college grads, over 33, tend to earn about $155k, while those with lower education and under 26 earn closer to $74k–$111k on average.
+# People with less than a college degree and age &lt; 30 is most likely not high earners. People with college degrees or advanced degrees, age &gt; 35,has the higher likelihood of being high earners.</code></pre>
+</div>
 
 
 
