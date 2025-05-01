@@ -10,10 +10,11 @@
 
 
 
+<meta name="date" content="2025-05-01" />
 
-<title>Portfolio 8</title>
+<title>Portfolio 8- How vitamin C affect tooth growth in guinea pigs.</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -141,11 +142,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -174,8 +179,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -183,16 +188,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -293,18 +291,148 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Portfolio 8</h1>
+<h1 class="title toc-ignore">Portfolio 8- How vitamin C affect tooth
+growth in guinea pigs.</h1>
+<h4 class="date">2025-05-01</h4>
 
 </div>
 
 
 <blockquote>
-<p>The projects should be numbered consecutively (i.e., in the order in
-which you began them), and should include for each project a description
-of the goal, the product (computer program, hand graph, computer graph,
-etc.), the data, and some interpretation. Reports must be reproducible
-and of high quality in terms of writing, grammar, presentation, etc.</p>
+<p>Well… I’m out of ideas, but this topic sounds interesting. How does
+Vitamin C affect the growth of guinea pig teeth? lol. This project
+explore how Vitamin C dose levels and supplement type (orange juice
+vs. ascorbic acid) affect tooth growth in guinea pigs. The goal is to
+understand whether the form of vitamin C delivery influences outcomes,
+and whether this effect depends on the dose administered.</p>
 </blockquote>
+<pre class="r"><code>library(ggplot2)
+data(&quot;ToothGrowth&quot;) 
+
+head(ToothGrowth)</code></pre>
+<pre><code>##    len supp dose
+## 1  4.2   VC  0.5
+## 2 11.5   VC  0.5
+## 3  7.3   VC  0.5
+## 4  5.8   VC  0.5
+## 5  6.4   VC  0.5
+## 6 10.0   VC  0.5</code></pre>
+<pre class="r"><code># Convert dose to factor for ANOVA
+ToothGrowth$dose &lt;- as.factor(ToothGrowth$dose)
+
+# Tooth length by supplement type and dose
+ggplot(ToothGrowth, aes(x = dose, y = len, fill = supp)) +
+  geom_boxplot() +
+  labs(
+    title = &quot;Tooth Growth by Dose and Supplement Type&quot;,
+    x = &quot;Vitamin C Dose (mg/day)&quot;,
+    y = &quot;Tooth Length&quot;,
+    fill = &quot;Supplement&quot;
+  ) +
+  theme_minimal()</code></pre>
+<p><img src="p08_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code># Tooth growth increases with higher doses for both OJ and VC.
+# OJ results in greater tooth growth at low and medium doses (0.5, 1.0 mg/day).
+# At the highest dose (2.0 mg/day), VC catches up or slightly surpasses OJ.</code></pre>
+<div id="t-test" class="section level2">
+<h2>T-test</h2>
+<pre class="r"><code>subset_0.5 &lt;- subset(ToothGrowth, dose == 0.5)
+subset_1   &lt;- subset(ToothGrowth, dose == 1)
+subset_2   &lt;- subset(ToothGrowth, dose == 2)
+
+t.test(len ~ supp, data = subset_0.5) # There is a statistically significant difference in tooth growth between OJ and VC at the 0.5 mg dose, wirh OJ leads to significantly more tooth growth than VC </code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  len by supp
+## t = 3.1697, df = 14.969, p-value = 0.006359
+## alternative hypothesis: true difference in means between group OJ and group VC is not equal to 0
+## 95 percent confidence interval:
+##  1.719057 8.780943
+## sample estimates:
+## mean in group OJ mean in group VC 
+##            13.23             7.98</code></pre>
+<pre class="r"><code>t.test(len ~ supp, data = subset_1) # OJ again leads to significantly greater tooth length;   </code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  len by supp
+## t = 4.0328, df = 15.358, p-value = 0.001038
+## alternative hypothesis: true difference in means between group OJ and group VC is not equal to 0
+## 95 percent confidence interval:
+##  2.802148 9.057852
+## sample estimates:
+## mean in group OJ mean in group VC 
+##            22.70            16.77</code></pre>
+<pre class="r"><code>t.test(len ~ supp, data = subset_2) # no significant difference   </code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  len by supp
+## t = -0.046136, df = 14.04, p-value = 0.9639
+## alternative hypothesis: true difference in means between group OJ and group VC is not equal to 0
+## 95 percent confidence interval:
+##  -3.79807  3.63807
+## sample estimates:
+## mean in group OJ mean in group VC 
+##            26.06            26.14</code></pre>
+</div>
+<div id="anova" class="section level2">
+<h2>ANOVA</h2>
+<pre class="r"><code>anova_model &lt;- aov(len ~ supp * dose, data = ToothGrowth)
+summary(anova_model)</code></pre>
+<pre><code>##             Df Sum Sq Mean Sq F value   Pr(&gt;F)    
+## supp         1  205.4   205.4  15.572 0.000231 ***
+## dose         2 2426.4  1213.2  92.000  &lt; 2e-16 ***
+## supp:dose    2  108.3    54.2   4.107 0.021860 *  
+## Residuals   54  712.1    13.2                     
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code># the type of supplement affects tooth growth.
+# dose level strongly affects growth.
+# supplement&#39;s effect varies by dose.
+
+TukeyHSD(anova_model)</code></pre>
+<pre><code>##   Tukey multiple comparisons of means
+##     95% family-wise confidence level
+## 
+## Fit: aov(formula = len ~ supp * dose, data = ToothGrowth)
+## 
+## $supp
+##       diff       lwr       upr     p adj
+## VC-OJ -3.7 -5.579828 -1.820172 0.0002312
+## 
+## $dose
+##         diff       lwr       upr   p adj
+## 1-0.5  9.130  6.362488 11.897512 0.0e+00
+## 2-0.5 15.495 12.727488 18.262512 0.0e+00
+## 2-1    6.365  3.597488  9.132512 2.7e-06
+## 
+## $`supp:dose`
+##                diff        lwr        upr     p adj
+## VC:0.5-OJ:0.5 -5.25 -10.048124 -0.4518762 0.0242521
+## OJ:1-OJ:0.5    9.47   4.671876 14.2681238 0.0000046
+## VC:1-OJ:0.5    3.54  -1.258124  8.3381238 0.2640208
+## OJ:2-OJ:0.5   12.83   8.031876 17.6281238 0.0000000
+## VC:2-OJ:0.5   12.91   8.111876 17.7081238 0.0000000
+## OJ:1-VC:0.5   14.72   9.921876 19.5181238 0.0000000
+## VC:1-VC:0.5    8.79   3.991876 13.5881238 0.0000210
+## OJ:2-VC:0.5   18.08  13.281876 22.8781238 0.0000000
+## VC:2-VC:0.5   18.16  13.361876 22.9581238 0.0000000
+## VC:1-OJ:1     -5.93 -10.728124 -1.1318762 0.0073930
+## OJ:2-OJ:1      3.36  -1.438124  8.1581238 0.3187361
+## VC:2-OJ:1      3.44  -1.358124  8.2381238 0.2936430
+## OJ:2-VC:1      9.29   4.491876 14.0881238 0.0000069
+## VC:2-VC:1      9.37   4.571876 14.1681238 0.0000058
+## VC:2-OJ:2      0.08  -4.718124  4.8781238 1.0000000</code></pre>
+<pre class="r"><code># On average, OJ leads to significantly more tooth growth than VC across all doses.
+
+# Orange juice leads to more tooth growth than pure vitamin C at lower doses.
+# At 2.0 mg/day, both delivery methods are equally effective.
+
+# Pretty much what I expected. After all, there is vc in orange juice as well, along with other trace minerals. I wonder if they would see a difference if they isolated the vc in the orange juice. I think it would have.
+# Probably should have used vc and water or other placebo.</code></pre>
+</div>
 
 
 
