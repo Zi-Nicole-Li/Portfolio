@@ -1,20 +1,69 @@
 ---
-title: "Portfolio 10"
+title: "Portfolio 10- Analyze UFO Sightings"
 ---
 
-> The projects should be numbered consecutively (i.e., in the order in which you began them), and should include for each project a description of the goal, the product (computer program, hand graph, computer graph, etc.), the data, and some interpretation. Reports must be reproducible and of high quality in terms of writing, grammar, presentation, etc.
+> I got the data from NUFORC (National UFO Reporting Center；https://nuforc.org/databank/). So credit to every dedicated person who has reported the suspected UFO sighting. In the dataset of UFO, I have the reported ufo sightings locations, and the reported ufo shapes, and their respective numbers.
+But honestly, most of the UFO sightings they describe are a bit of a pipe dream. The descriptions sound like drones or aircraft.
 
+## Locations
+```{r}
+library(readxl)
+library(dplyr)
+library(ggplot2)
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed hendrerit purus ut dapibus vestibulum. Suspendisse potenti. Cras faucibus mauris in leo condimentum lobortis. Cras euismod sollicitudin augue, ut venenatis quam placerat eu. Maecenas vulputate rhoncus odio, in interdum risus malesuada gravida. Maecenas cursus sed dui sit amet lacinia. Nunc dignissim metus nec ex mattis, non rutrum urna cursus. Morbi pretium elementum purus, in aliquet libero eleifend ac. Nam finibus, ligula sed ultrices pharetra, tellus risus consequat tortor, facilisis maximus elit lectus a metus. Sed vel dictum nulla, vitae blandit turpis. Integer pulvinar tempor diam ac venenatis. Vestibulum est lacus, suscipit et ipsum nec, consectetur iaculis leo. Morbi libero lacus, scelerisque non sollicitudin vitae, accumsan sed tellus. Suspendisse quis orci tellus.
+ufo <- read_excel("~/Downloads/UFO.xlsx")
+colnames(ufo) <- c("location", "location_count", "shape", "shape_count")
 
+# Top 10 locations by report count
+top_locations <- ufo %>%
+  distinct(location, location_count) %>%
+  arrange(desc(location_count)) %>%
+  slice_head(n = 10)
+# No.1 California (16785); No.2 Florida (8643); No.3 Washington (7448)
 
-```{r, child='p10/demo.Rmd'}
+ggplot(top_locations, aes(x = reorder(location, location_count), y = location_count)) +
+  geom_col(fill = "lightblue") +
+  coord_flip() +
+  labs(title = "Top 10 Locations for UFO Sightings",
+       x = "Location", y = "Number of Reports")
+
 ```
 
+## Shape
+```{r}
+# Top 10 shapes by shapes count
+top_shapes <- ufo %>%
+  distinct(shape, shape_count) %>%
+  arrange(desc(shape_count)) %>%
+  slice_head(n = 10)
 
-Aliquam sed ex et lorem consequat feugiat at porta leo. Fusce id hendrerit tellus. Maecenas dictum felis neque, quis dictum metus tristique eu. Vivamus sed blandit nisl. Integer ut urna dolor. Cras in egestas eros, in aliquam nisi. Duis vitae elementum quam. Vivamus vel turpis commodo, porttitor urna vitae, viverra sem. Nam nec dignissim erat, id viverra libero. Integer vel lectus pellentesque tortor fringilla posuere. Vivamus quis magna accumsan, porta tortor at, aliquam urna. Aliquam vestibulum ante massa, ut gravida lectus sagittis vitae.
+ggplot(top_shapes, aes(x = reorder(shape, shape_count), y = shape_count)) +
+  geom_col(fill = "darkorchid") +
+  coord_flip() +
+  labs(title = "Top 10 Reported UFO Shapes",
+       x = "Shape", y = "Number of Reports")
 
-Sed eget ipsum auctor, gravida magna sit amet, tincidunt mi. Nulla erat ante, volutpat nec sem eget, luctus posuere est. Praesent convallis nunc ac turpis bibendum, in maximus magna convallis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed sit amet nulla ante. Sed elit sem, lobortis nec nisi a, rhoncus ornare nunc. Curabitur ultrices neque feugiat, facilisis magna eu, consectetur magna. Mauris id eleifend ex.
+```
 
-Morbi tincidunt mollis odio sit amet feugiat. Ut vel risus eu ante dictum consequat. Integer et luctus mauris. Donec nec faucibus urna, sed commodo risus. Nam elementum pulvinar erat, eget convallis est blandit vel. Etiam gravida sapien eu massa hendrerit maximus. Proin dolor quam, porta vitae libero non, venenatis porta tellus. Vivamus et elit a est aliquet consequat. Proin tempus, purus quis suscipit placerat, dui nunc euismod dui, sit amet luctus leo lectus in risus. Phasellus consectetur eleifend arcu. Nullam venenatis blandit nulla ut ullamcorper. Vestibulum eu arcu quis massa scelerisque sodales in ac augue. Quisque dapibus fringilla turpis, ut cursus tortor cursus sed. Sed facilisis quam eget neque viverra venenatis. Suspendisse ut lorem nec erat elementum bibendum. Curabitur lobortis purus in cursus blandit.
+## plot both variables
+```{r}
+library(tidyr)
+
+# Combine both
+long_data <- ufo %>%
+  select(location, location_count, shape, shape_count) %>%
+  pivot_longer(cols = c(location_count, shape_count),
+               names_to = "type", values_to = "count")
+
+long_data <- long_data %>%
+  filter((type == "location_count" & location %in% top_locations$location) |
+         (type == "shape_count" & shape %in% top_shapes$shape))
+
+ggplot(long_data, aes(x = count, y = reorder(ifelse(type == "location_count", location, shape), count), fill = type)) +
+  geom_col() +
+  facet_wrap(~ type, scales = "free_y") +
+  labs(title = "UFO Sightings by Location and Shape",
+       x = "Report Count", y = NULL) 
+
+```
 
