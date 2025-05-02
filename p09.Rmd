@@ -1,5 +1,87 @@
 ---
-title: "Portfolio 9"
----
+title: "Portfolio 9- forecast air travel demand using time series decomposition, ARIMA, and smoothing."
 
-> The projects should be numbered consecutively (i.e., in the order in which you began them), and should include for each project a description of the goal, the product (computer program, hand graph, computer graph, etc.), the data, and some interpretation. Reports must be reproducible and of high quality in terms of writing, grammar, presentation, etc.
+---
+> This project analyze historical monthly airline passenger data (1949–1960) and forecast future passenger demand for the next two years using time series methods. The ARIMA model successfully captured both the upward trend and seasonal cycles in the data. MAPE = 0.48%, indicating excellent predictive accuracy.
+
+
+```{r}
+data("AirPassengers")
+
+str(AirPassengers)
+summary(AirPassengers)
+
+# just the raw time series
+plot(AirPassengers,
+     main = "Monthly Airline Passenger Numbers (1949–1960)",
+     ylab = "Passengers (in thousands)",
+     xlab = "Year")
+```
+```{r}
+# separates the trend, seasonal pattern, and random noise
+decomposed <- decompose(AirPassengers, type = "multiplicative")
+
+# Plot the decomposition
+plot(decomposed)
+# peaks in summer, and an upward trend over time.
+
+```
+
+## meets the assumptions of ARIMA modeling
+```{r}
+# stabilize variance
+# assume constant variance.
+log_AP <- log(AirPassengers)
+
+# achieve stationarity
+diff_log_AP <- diff(log_AP)
+
+# Plot differenced data
+plot(diff_log_AP, main = "Differenced Log of AirPassengers") # achieved stationary series 
+
+# Autocorrelation Function
+acf(diff_log_AP)
+# Partial Autocorrelation Function
+pacf(diff_log_AP)
+
+```
+
+
+```{r}
+
+# install.packages("forecast")
+library(forecast)
+
+# Fit ARIMA model automatically
+fit <- auto.arima(log_AP) # I can actually omitted the acf() & pacf()... cause auto.arima() find the best values for p, d, q value for me.
+summary(fit)
+
+# next 2 years.
+forecasted <- forecast(fit, h = 24)
+plot(forecasted, main = "Forecasted Airline Passengers (Log Scale)")
+
+# The forecast shows continued seasonal cycles with increasing values, matching historical patterns.
+# The prediction intervals widen over time; increased uncertainty the further you forecast.
+
+```
+
+## Interpret forecast in real-world
+```{r}
+
+# Convert log-forecast back to actual units
+forecast_exp <- exp(forecasted$mean)
+
+ts.plot(AirPassengers, forecast_exp,
+        col = c("blue", "pink"),
+        lty = 1,
+        main = "Forecast vs Actual Passengers",
+        ylab = "Passengers (in thousands)")
+legend("topleft", legend = c("Actual", "Forecast"), col = c("blue", "pink"), lty = 1)
+
+# The forecast follow the upward trend in air travel demand as in the historical data.
+# The pink forecast line shows the seasonal spikes, peaking in the middle of each year (around summer).
+# By the end of 1962, forecasted passenger numbers exceed 700,000 in peak months.
+
+
+```
+

@@ -11,9 +11,9 @@
 
 
 
-<title>Portfolio 9</title>
+<title>Portfolio 9- forecast air travel demand using time series decomposition, ARIMA, and smoothing.</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -141,11 +141,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -174,8 +178,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -183,16 +187,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -293,18 +290,105 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Portfolio 9</h1>
+<h1 class="title toc-ignore">Portfolio 9- forecast air travel demand
+using time series decomposition, ARIMA, and smoothing.</h1>
 
 </div>
 
 
 <blockquote>
-<p>The projects should be numbered consecutively (i.e., in the order in
-which you began them), and should include for each project a description
-of the goal, the product (computer program, hand graph, computer graph,
-etc.), the data, and some interpretation. Reports must be reproducible
-and of high quality in terms of writing, grammar, presentation, etc.</p>
+<p>This project analyze historical monthly airline passenger data
+(1949–1960) and forecast future passenger demand for the next two years
+using time series methods. The ARIMA model successfully captured both
+the upward trend and seasonal cycles in the data. MAPE = 0.48%,
+indicating excellent predictive accuracy.</p>
 </blockquote>
+<pre class="r"><code>data(&quot;AirPassengers&quot;)
+
+str(AirPassengers)</code></pre>
+<pre><code>##  Time-Series [1:144] from 1949 to 1961: 112 118 132 129 121 135 148 148 136 119 ...</code></pre>
+<pre class="r"><code>summary(AirPassengers)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   104.0   180.0   265.5   280.3   360.5   622.0</code></pre>
+<pre class="r"><code># just the raw time series
+plot(AirPassengers,
+     main = &quot;Monthly Airline Passenger Numbers (1949–1960)&quot;,
+     ylab = &quot;Passengers (in thousands)&quot;,
+     xlab = &quot;Year&quot;)</code></pre>
+<p><img src="p09_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code># separates the trend, seasonal pattern, and random noise
+decomposed &lt;- decompose(AirPassengers, type = &quot;multiplicative&quot;)
+
+# Plot the decomposition
+plot(decomposed)</code></pre>
+<p><img src="p09_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<pre class="r"><code># peaks in summer, and an upward trend over time.</code></pre>
+<div id="meets-the-assumptions-of-arima-modeling"
+class="section level2">
+<h2>meets the assumptions of ARIMA modeling</h2>
+<pre class="r"><code># stabilize variance
+# assume constant variance.
+log_AP &lt;- log(AirPassengers)
+
+# achieve stationarity
+diff_log_AP &lt;- diff(log_AP)
+
+# Plot differenced data
+plot(diff_log_AP, main = &quot;Differenced Log of AirPassengers&quot;) # achieved stationary series </code></pre>
+<p><img src="p09_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code># Autocorrelation Function
+acf(diff_log_AP)</code></pre>
+<p><img src="p09_files/figure-html/unnamed-chunk-3-2.png" width="672" /></p>
+<pre class="r"><code># Partial Autocorrelation Function
+pacf(diff_log_AP)</code></pre>
+<p><img src="p09_files/figure-html/unnamed-chunk-3-3.png" width="672" /></p>
+<pre class="r"><code># install.packages(&quot;forecast&quot;)
+library(forecast)</code></pre>
+<pre><code>## Registered S3 method overwritten by &#39;quantmod&#39;:
+##   method            from
+##   as.zoo.data.frame zoo</code></pre>
+<pre class="r"><code># Fit ARIMA model automatically
+fit &lt;- auto.arima(log_AP) # I can actually omitted the acf() &amp; pacf()... cause auto.arima() find the best values for p, d, q value for me.
+summary(fit)</code></pre>
+<pre><code>## Series: log_AP 
+## ARIMA(0,1,1)(0,1,1)[12] 
+## 
+## Coefficients:
+##           ma1     sma1
+##       -0.4018  -0.5569
+## s.e.   0.0896   0.0731
+## 
+## sigma^2 = 0.001371:  log likelihood = 244.7
+## AIC=-483.4   AICc=-483.21   BIC=-474.77
+## 
+## Training set error measures:
+##                        ME       RMSE        MAE        MPE      MAPE      MASE
+## Training set 0.0005730622 0.03504883 0.02626034 0.01098898 0.4752815 0.2169522
+##                    ACF1
+## Training set 0.01443892</code></pre>
+<pre class="r"><code># next 2 years.
+forecasted &lt;- forecast(fit, h = 24)
+plot(forecasted, main = &quot;Forecasted Airline Passengers (Log Scale)&quot;)</code></pre>
+<p><img src="p09_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code># The forecast shows continued seasonal cycles with increasing values, matching historical patterns.
+# The prediction intervals widen over time; increased uncertainty the further you forecast.</code></pre>
+</div>
+<div id="interpret-forecast-in-real-world" class="section level2">
+<h2>Interpret forecast in real-world</h2>
+<pre class="r"><code># Convert log-forecast back to actual units
+forecast_exp &lt;- exp(forecasted$mean)
+
+ts.plot(AirPassengers, forecast_exp,
+        col = c(&quot;blue&quot;, &quot;pink&quot;),
+        lty = 1,
+        main = &quot;Forecast vs Actual Passengers&quot;,
+        ylab = &quot;Passengers (in thousands)&quot;)
+legend(&quot;topleft&quot;, legend = c(&quot;Actual&quot;, &quot;Forecast&quot;), col = c(&quot;blue&quot;, &quot;pink&quot;), lty = 1)</code></pre>
+<p><img src="p09_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code># The forecast follow the upward trend in air travel demand as in the historical data.
+# The pink forecast line shows the seasonal spikes, peaking in the middle of each year (around summer).
+# By the end of 1962, forecasted passenger numbers exceed 700,000 in peak months.</code></pre>
+</div>
 
 
 
